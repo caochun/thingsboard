@@ -1,0 +1,3 @@
+[submodule "minitb"]
+	path = minitb
+	url = git@github.com:caochun/minitb.git
