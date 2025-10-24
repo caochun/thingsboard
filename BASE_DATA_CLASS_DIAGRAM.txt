@@ -1,0 +1,246 @@
+ThingsBoard BaseData 类继承关系图
+=====================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                        接口层 (Interfaces)                        │
+└─────────────────────────────────────────────────────────────────┘
+
+                    ┌──────────────┐
+                    │   HasUUID    │
+                    │  (interface) │
+                    │ UUID getId() │
+                    └──────┬───────┘
+                           │
+                    ┌──────▼───────┐
+                    │    HasId<I>  │
+                    │  (interface) │
+                    │  I getId()   │
+                    └──────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                      基础抽象类 (Abstract Classes)                │
+└─────────────────────────────────────────────────────────────────┘
+
+                    ┌──────────────────────┐
+                    │     UUIDBased        │ ◄─── 封装UUID
+                    │  (abstract class)    │      hash缓存
+                    ├──────────────────────┤
+                    │ - UUID id (final)    │
+                    │ - int hash           │
+                    │ + UUID getId()       │
+                    │ + int hashCode()     │
+                    └──────────┬───────────┘
+                               │ extends
+                    ┌──────────▼───────────┐
+                    │    IdBased<I>        │ ◄─── 类型化ID管理
+                    │  (abstract class)    │
+                    ├──────────────────────┤
+                    │ # I id               │
+                    │ + I getId()          │
+                    │ + UUID getUuidId()   │
+                    │ + void setId(I)      │
+                    └──────────┬───────────┘
+                               │ extends
+                    ┌──────────▼────────────┐
+                    │    BaseData<I>        │ ◄─── 添加创建时间
+                    │  (abstract class)     │      ⭐ 核心基类
+                    ├───────────────────────┤
+                    │ # long createdTime    │
+                    │ $ ObjectMapper mapper │
+                    │ + long getCreatedTime()│
+                    │ + void setCreatedTime()│
+                    └──────────┬────────────┘
+                               │ extends
+               ┌───────────────┴────────────────┐
+               │                                │
+    ┌──────────▼────────────────┐   ┌──────────▼──────────┐
+    │ BaseDataWithAdditionalInfo│   │   ContactBased<I>   │
+    │    (abstract class)       │   │  (abstract class)   │
+    ├───────────────────────────┤   ├─────────────────────┤
+    │ - JsonNode additionalInfo │   │ - String country    │
+    │ - byte[] additionalInfoBytes│ │ - String city       │
+    │ + JsonNode getAdditionalInfo()│ │ - String state    │
+    │ + void setAdditionalInfo()│   │ - String zip        │
+    │ + void setAdditionalInfoField()│ │ - String address  │
+    └──────────┬────────────────┘   │ - String phone      │
+               │                    │ - String email      │
+               │                    └──────────┬──────────┘
+               │                               │
+
+┌──────────────┴────────────────────────────────┴────────────────────┐
+│                       具体实体类 (Entity Classes)                     │
+└──────────────────────────────────────────────────────────────────────┘
+
+    ┌──────────────────────┐          ┌──────────────────────┐
+    │       Device         │          │        Asset         │
+    │  (concrete class)    │          │  (concrete class)    │
+    ├──────────────────────┤          ├──────────────────────┤
+    │ - TenantId tenantId  │          │ - TenantId tenantId  │
+    │ - CustomerId customerId│        │ - CustomerId customerId│
+    │ - String name        │          │ - String name        │
+    │ - String type        │          │ - String type        │
+    │ - String label       │          │ - String label       │
+    │ - DeviceProfileId    │          │ - AssetProfileId     │
+    │ - DeviceData data    │          │ - AssetProfileId     │
+    └──────────────────────┘          └──────────────────────┘
+         ▲ extends                         ▲ extends
+         │ BaseDataWithAdditionalInfo      │ BaseDataWithAdditionalInfo
+         │ <DeviceId>                      │ <AssetId>
+         │                                 │
+
+    ┌──────────────────────┐          ┌──────────────────────┐
+    │   DeviceProfile      │          │      Tenant          │
+    │  (concrete class)    │          │  (concrete class)    │
+    ├──────────────────────┤          ├──────────────────────┤
+    │ - TenantId tenantId  │          │ - String title       │
+    │ - String name        │          │ - String region      │
+    │ - String description │          │ - TenantProfileId    │
+    │ - DeviceProfileData  │          │   (继承 ContactBased) │
+    │ - boolean isDefault  │          └──────────────────────┘
+    └──────────────────────┘               ▲ extends
+         ▲ extends                         │ ContactBased<TenantId>
+         │ BaseData                        │
+         │ <DeviceProfileId>               │
+
+    ┌──────────────────────┐
+    │      Customer        │
+    │  (concrete class)    │
+    ├──────────────────────┤
+    │ - TenantId tenantId  │
+    │ - String title       │
+    │   (继承 ContactBased) │
+    └──────────────────────┘
+         ▲ extends
+         │ ContactBased<CustomerId>
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    ID类层次结构 (ID Hierarchy)                     │
+└─────────────────────────────────────────────────────────────────┘
+
+                    ┌──────────────┐
+                    │  UUIDBased   │
+                    │- UUID id     │
+                    └──────┬───────┘
+                           │ extends (all IDs)
+        ┌──────────────────┼──────────────────┬───────────────┐
+        │                  │                  │               │
+   ┌────▼─────┐      ┌────▼─────┐      ┌────▼─────┐   ┌────▼─────┐
+   │ DeviceId │      │ AssetId  │      │TenantId  │   │CustomerId│
+   └──────────┘      └──────────┘      └──────────┘   └──────────┘
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│                      数据流示例 (Data Flow)                        │
+└─────────────────────────────────────────────────────────────────┘
+
+创建 Device 实例的属性来源：
+
+    Device device = new Device();
+    
+    ┌─────────────────────────────────────────────────────┐
+    │ 来自 IdBased<DeviceId>:                             │
+    │   - DeviceId id                                     │
+    │   - device.getId()                                  │
+    │   - device.getUuidId()                              │
+    └─────────────────────────────────────────────────────┘
+                           │
+    ┌──────────────────────▼──────────────────────────────┐
+    │ 来自 BaseData<DeviceId>:                            │
+    │   - long createdTime                                │
+    │   - device.getCreatedTime()                         │
+    │   - device.setCreatedTime()                         │
+    │   - static ObjectMapper mapper                      │
+    └─────────────────────────────────────────────────────┘
+                           │
+    ┌──────────────────────▼──────────────────────────────┐
+    │ 来自 BaseDataWithAdditionalInfo<DeviceId>:          │
+    │   - JsonNode additionalInfo                         │
+    │   - byte[] additionalInfoBytes                      │
+    │   - device.getAdditionalInfo()                      │
+    │   - device.setAdditionalInfo()                      │
+    └─────────────────────────────────────────────────────┘
+                           │
+    ┌──────────────────────▼──────────────────────────────┐
+    │ Device 自有属性:                                     │
+    │   - TenantId tenantId                               │
+    │   - CustomerId customerId                           │
+    │   - String name                                     │
+    │   - String type                                     │
+    │   - String label                                    │
+    │   - DeviceProfileId deviceProfileId                 │
+    │   - DeviceData deviceData                           │
+    └─────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│                   接口实现 (Interface Implementation)              │
+└─────────────────────────────────────────────────────────────────┘
+
+Device 实现的接口：
+
+    Device implements:
+        ├─ HasLabel          → String getLabel()
+        ├─ HasTenantId       → TenantId getTenantId()
+        ├─ HasCustomerId     → CustomerId getCustomerId()
+        ├─ HasOtaPackage     → OtaPackageId getFirmwareId()
+        ├─ HasVersion        → Long getVersion()
+        └─ ExportableEntity  → 支持导入导出
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│                   关键设计模式 (Design Patterns)                   │
+└─────────────────────────────────────────────────────────────────┘
+
+1. 模板方法模式 (Template Method)
+   BaseData 定义骨架，子类实现细节
+
+2. 泛型编程 (Generics)
+   BaseData<I extends UUIDBased> 确保类型安全
+
+3. 延迟加载 (Lazy Loading)
+   additionalInfo 从 additionalInfoBytes 按需反序列化
+
+4. 缓存模式 (Caching)
+   UUIDBased 缓存 hash 值，避免重复计算
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│                   继承选择流程 (Inheritance Decision)              │
+└─────────────────────────────────────────────────────────────────┘
+
+                    需要创建新实体？
+                           │
+                           ▼
+                    需要额外JSON信息？
+                           │
+                ┌──────────┴──────────┐
+                │                     │
+               是                     否
+                │                     │
+                ▼                     ▼
+    BaseDataWithAdditionalInfo    需要联系信息？
+         (Device, Asset)               │
+                               ┌───────┴───────┐
+                               │               │
+                              是              否
+                               │               │
+                               ▼               ▼
+                         ContactBased      BaseData
+                      (Tenant, Customer) (DeviceProfile)
+
+
+═══════════════════════════════════════════════════════════════════
+
+图例说明：
+  ▲  extends (继承)
+  ►  implements (实现接口)
+  ─  关联关系
+  │  层次结构
+  ┌┐ 类/接口边界
+  ═  分隔线
+  # protected (受保护)
+  - private (私有)
+  + public (公开)
+  $ static (静态)
+
