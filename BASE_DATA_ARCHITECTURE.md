@@ -373,3 +373,4 @@ public class Device {
 
 BaseData 是 ThingsBoard 架构中的**基石**，为整个系统的实体管理提供了统一、类型安全、高性能的基础设施。
 
+
